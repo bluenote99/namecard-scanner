@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="명함스캔">
+  <title>명함 스캔 — bluenote</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, 'Noto Sans KR', sans-serif;
+      background: #f5f5f3;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .header {
+      text-align: center;
+      padding-top: 0.5rem;
+    }
+
+    .header-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.75rem;
+      font-size: 22px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+      letter-spacing: -0.3px;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.25rem;
+      border: 1px solid #ebebeb;
+    }
+
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #aaa;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .webhook-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .webhook-row input {
+      flex: 1;
+      font-size: 13px;
+      padding: 10px 12px;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      background: #fafafa;
+      color: #1a1a1a;
+      outline: none;
+      min-width: 0;
+    }
+
+    .webhook-row input:focus {
+      border-color: #1a1a1a;
+      background: #fff;
+    }
+
+    .btn-save {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid #e8e8e8;
+      background: #fafafa;
+      color: #1a1a1a;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-save:active { opacity: 0.6; }
+
+    .saved-badge {
+      font-size: 11px;
+      color: #22c55e;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .saved-badge.visible { display: block; }
+
+    .preview-wrap {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 10px;
+      background: #f5f5f3;
+      border: 1.5px dashed #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 1rem;
+      cursor: pointer;
+    }
+
+    .preview-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .preview-placeholder {
+      text-align: center;
+      color: #bbb;
+    }
+
+    .preview-placeholder .icon { font-size: 32px; display: block; margin-bottom: 8px; }
+    .preview-placeholder p { font-size: 13px; }
+
+    input[type="file"] { display: none; }
+
+    .btn-camera {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1.5px solid #1a1a1a;
+      background: #fff;
+      color: #1a1a1a;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+    }
+
+    .btn-camera:active { background: #f5f5f3; }
+
+    .btn-send {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: #219ebc;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: -0.2px;
+    }
+
+    .btn-send.visible { display: flex; }
+    .btn-send:active { opacity: 0.8; }
+    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .memo-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      background: #fafafa;
+      color: #1a1a1a;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      line-height: 1.5;
+    }
+
+    textarea:focus {
+      border-color: #1a1a1a;
+      background: #fff;
+    }
+
+    .status {
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+    }
+
+    .status.visible { display: flex; }
+
+    .status.loading { background: #eff6ff; color: #2563eb; }
+    .status.success { background: #f0fdf4; color: #16a34a; }
+    .status.error   { background: #fef2f2; color: #dc2626; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #ccc;
+      padding-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-icon">📇</div>
+    <h1>명함 스캔</h1>
+    <p>사진 찍으면 노션에 자동 저장</p>
+  </div>
+
+  <input type="hidden" id="webhookUrl" />
+
+  <div class="card">
+    <div class="preview-wrap" id="previewWrap" onclick="document.getElementById('fileInput').click()">
+      <div class="preview-placeholder" id="placeholder">
+        <span class="icon">📷</span>
+        <p>여기를 탭해서 명함 촬영</p>
+      </div>
+      <img id="previewImg" />
+    </div>
+
+    <label class="memo-label">메모 (만난 날짜, 장소, 컨텍스트)</label>
+    <textarea id="memo" rows="2" placeholder=""></textarea>
+
+    <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handleFile(event)" />
+
+    <br><br>
+
+    <button class="btn-camera" onclick="document.getElementById('fileInput').click()">
+      📷 명함 촬영 / 선택
+    </button>
+
+    <button class="btn-send" id="sendBtn" onclick="sendWebhook()">
+      ⚡ 노션에 저장하기
+    </button>
+  </div>
+
+  <div class="status" id="status">
+    <div class="spinner" id="spinner" style="display:none"></div>
+    <span id="statusText"></span>
+  </div>
+
+  <div class="footer">Copyright © 2026 bluenote All rights reserved. | 명함 스캐너</div>
+
+</div>
+
+<script>
+  let currentFile = null;
+  let currentBase64 = null;
+
+  const WEBHOOK_URL = 'https://hook.eu2.make.com/ryh4x1611mfxur7h7tbjmm17dimy8viy';
+
+  window.onload = function () {
+    document.getElementById('webhookUrl').value = WEBHOOK_URL;
+    document.getElementById('savedBadge').classList.add('visible');
+  };
+
+  function saveWebhook() {}
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    currentFile = file;
+
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      const img = document.getElementById('previewImg');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+      document.getElementById('placeholder').style.display = 'none';
+      document.getElementById('sendBtn').classList.add('visible');
+      compressImage(ev.target.result, 1200, 0.7, function(compressed) {
+        currentBase64 = compressed.split(',')[1];
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function compressImage(dataUrl, maxWidth, quality, callback) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  }
+
+  async function sendWebhook() {
+    const webhookUrl = document.getElementById('webhookUrl').value.trim();
+    if (!webhookUrl) { showStatus('error', '웹훅 URL을 먼저 입력해주세요'); return; }
+    if (!currentBase64) { showStatus('error', '명함 사진을 먼저 선택해주세요'); return; }
+
+    const memo = document.getElementById('memo').value.trim();
+    const scannedAt = new Date().toISOString().split('T')[0];
+
+    showStatus('loading', '노션에 저장 중...');
+    document.getElementById('sendBtn').disabled = true;
+
+    try {
+      const payload = {
+        image_base64: currentBase64,
+        image_type: currentFile.type || 'image/jpeg',
+        memo: memo,
+        scanned_at: scannedAt,
+        source: 'bluenote-card-scanner'
+      };
+
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        showStatus('success', '✓ 노션에 저장됐어요!');
+        setTimeout(resetForm, 2500);
+      } else {
+        showStatus('error', `오류 발생 (${res.status}) — 웹훅 URL 확인해주세요`);
+      }
+    } catch (err) {
+      showStatus('error', '전송 실패 — 네트워크 또는 URL 확인해주세요');
+    }
+
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  function showStatus(type, text) {
+    const el = document.getElementById('status');
+    el.className = 'status visible ' + type;
+    document.getElementById('spinner').style.display = type === 'loading' ? 'block' : 'none';
+    document.getElementById('statusText').textContent = text;
+  }
+
+  function resetForm() {
+    currentFile = null;
+    currentBase64 = null;
+    document.getElementById('previewImg').style.display = 'none';
+    document.getElementById('placeholder').style.display = 'flex';
+    document.getElementById('sendBtn').classList.remove('visible');
+    document.getElementById('memo').value = '';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('status').className = 'status';
+  }
+</script>
+</body>
+</html>
